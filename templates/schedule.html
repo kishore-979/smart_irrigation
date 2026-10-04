@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Generated Schedule · Smart Irrigation{% endblock %}
+{% macro result_table(title, rows, totals, accent) %}
+<section class="panel result-panel {{ accent }}">
+  <div class="section-heading">
+    <div><span class="eyebrow">{{ title }}</span><h2>{{ totals.water }} L total</h2></div>
+    <div class="pill">{{ totals.safe_days }}/{{ rows|length }} safe days</div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Day</th><th>Before irrigation</th><th>Water</th><th>Final moisture</th><th>Status</th></tr></thead>
+    <tbody>{% for row in rows %}<tr>
+      <td>{{ row.day }}</td><td>{{ row.base_moisture }}%</td><td><strong>{{ row.irrigation }} L</strong></td><td>{{ row.end_moisture }}%</td>
+      <td><span class="status {{ 'safe' if row.safe else 'risk' }}">{{ 'Safe' if row.safe else 'Below target' }}</span></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endmacro %}
+{% block content %}
+<div class="page-heading result-heading"><div><span class="eyebrow">Your field plan is ready</span><h1>Irrigation schedule</h1><p>Target: {{ settings.minimum_moisture }}% minimum · Budget: {{ settings.water_budget }} L</p></div><a class="button primary" href="{{ url_for('comparison') }}">Explore comparison <span>→</span></a></div>
+<section class="result-insight-bar">
+  <div><span class="insight-symbol">✦</span><p><strong>Instant observation</strong><small>Dynamic Programming uses {{ greedy_totals.water - dynamic_totals.water }} L less water for this scenario.</small></p></div>
+  <button class="info-button light" type="button" aria-label="Explain this observation" data-icon="🧠" data-insight-title="Why did DP save water?" data-insight-text="Greedy adds the configured safety margin whenever a day is dry. DP looks across the entire schedule and supplies only what is needed to reach the minimum target." data-insight-tip="Compare water use together with safe days; lower water alone is not useful if more days become unsafe.">i</button>
+</section>
+{{ result_table('Greedy strategy', greedy, greedy_totals, 'greedy') }}
+{{ result_table('Dynamic Programming', dynamic, dynamic_totals, 'dynamic') }}
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Smart Irrigation{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="hero-badge"><span></span> Intelligent water planning</span>
+    <h1>Grow more.<br><em>Waste less.</em></h1>
+    <p>Turn daily field conditions into a clear irrigation plan, then watch Greedy and Dynamic Programming compete for every drop.</p>
+    <div class="hero-points">
+      <span>✓ Offline simulation</span><span>✓ Explainable results</span><span>✓ 1–14 day planning</span>
+    </div>
+  </div>
+  <div class="field-scene" aria-label="Animated smart irrigation field illustration">
+    <div class="scene-sun"><span></span></div>
+    <div class="scene-cloud"><i></i><i></i><i></i><b></b></div>
+    <div class="scene-metric"><small>Water intelligence</small><strong>LIVE</strong></div>
+    <div class="sprinkler"><span></span><i class="spray spray-one"></i><i class="spray spray-two"></i><i class="spray spray-three"></i></div>
+    <div class="plant plant-one"><i></i><b></b></div>
+    <div class="plant plant-two"><i></i><b></b></div>
+    <div class="plant plant-three"><i></i><b></b></div>
+    <div class="field-lines"></div>
+  </div>
+</section>
+
+<section class="journey-strip" aria-label="How the application works">
+  <div><span>01</span><p><strong>Enter conditions</strong><small>Describe your field</small></p></div>
+  <i>→</i>
+  <div><span>02</span><p><strong>Run both methods</strong><small>Calculate schedules</small></p></div>
+  <i>→</i>
+  <div><span>03</span><p><strong>Compare & decide</strong><small>Find the smarter plan</small></p></div>
+</section>
+
+<form action="{{ url_for('schedule') }}" method="post" id="schedule-form">
+  <section class="panel configuration-panel">
+    <div class="section-heading">
+      <div><span class="eyebrow">Step 1 · Planning controls</span><h2>Shape your irrigation strategy</h2><p class="section-copy">Hover or click <span class="mini-info">i</span> whenever you want a deeper explanation.</p></div>
+      <div class="live-summary"><span class="pulse-dot"></span><strong id="live-days">{{ days|length }} days</strong><small id="live-budget">{{ settings.water_budget }} L available</small></div>
+    </div>
+    <div class="settings-grid">
+      <div class="setting-card">
+        <div class="setting-icon icon-calendar" aria-hidden="true">▦</div>
+        <label for="day-count"><span>Days</span></label>
+        <button class="info-button" type="button" aria-label="Learn about days" data-icon="📅" data-insight-title="Planning days" data-insight-text="The number of consecutive days included in the schedule. Choose from 1 to 14. A longer period gives Dynamic Programming more future days to consider." data-insight-tip="Days is n in the O(n) Greedy complexity and the O(nB) DP complexity.">i</button>
+        <input type="number" id="day-count" name="day_count" min="1" max="14" value="{{ days|length }}">
+        <small class="field-help">Length of the farm forecast, from 1 to 14 days.</small>
+      </div>
+      <div class="setting-card">
+        <div class="setting-icon icon-moisture" aria-hidden="true">◉</div>
+        <label for="minimum-moisture"><span>Minimum moisture</span></label>
+        <button class="info-button" type="button" aria-label="Learn about minimum moisture" data-icon="💧" data-insight-title="Minimum soil moisture" data-insight-text="The lowest acceptable soil-moisture percentage. A day is marked safe only when its predicted final moisture reaches or exceeds this target." data-insight-tip="This is the constraint both algorithms try to satisfy; it is not the amount of water supplied.">i</button>
+        <div class="input-unit"><input id="minimum-moisture" type="number" name="minimum_moisture" min="1" max="90" step="0.1" value="{{ settings.minimum_moisture }}"><span>%</span></div>
+        <small class="field-help">Safety threshold the soil should not fall below.</small>
+      </div>
+      <div class="setting-card">
+        <div class="setting-icon icon-shield" aria-hidden="true">◇</div>
+        <label for="safety-margin"><span>Greedy safety margin</span></label>
+        <button class="info-button" type="button" aria-label="Learn about safety margin" data-icon="🛡️" data-insight-title="Greedy safety margin" data-insight-text="Extra moisture added above the minimum target by the Greedy method. It provides a buffer, but can make Greedy consume more water than DP." data-insight-tip="With the sample data, the 1% margin adds one extra 5 L pump step on each dry day.">i</button>
+        <div class="input-unit"><input id="safety-margin" type="number" name="safety_margin" min="0" max="20" step="0.1" value="{{ settings.safety_margin }}"><span>%</span></div>
+        <small class="field-help">Extra buffer used only by the Greedy algorithm.</small>
+      </div>
+      <div class="setting-card">
+        <div class="setting-icon icon-budget" aria-hidden="true">◒</div>
+        <label for="water-budget"><span>Shared budget</span></label>
+        <button class="info-button" type="button" aria-label="Learn about shared budget" data-icon="🚰" data-insight-title="Shared water budget" data-insight-text="The total number of litres available for the complete schedule. Both methods must stay within this limit, so water spent early is unavailable later." data-insight-tip="The budget becomes B pump units in the DP state dp[day][used units].">i</button>
+        <div class="input-unit"><input id="water-budget" type="number" name="water_budget" min="0" step="5" value="{{ settings.water_budget }}"><span>L</span></div>
+        <small class="field-help">Total water that all scheduled days must share.</small>
+      </div>
+      <div class="setting-card">
+        <div class="setting-icon icon-pump" aria-hidden="true">↟</div>
+        <label for="pump-step"><span>Pump step</span></label>
+        <button class="info-button" type="button" aria-label="Learn about pump step" data-icon="⚙️" data-insight-title="Pump step" data-insight-text="The smallest amount the pump can release in one action. A 5 L step means allocations are rounded to 0, 5, 10, 15 litres and so on." data-insight-tip="Smaller steps offer finer plans but increase the number of DP budget states.">i</button>
+        <div class="input-unit"><select id="pump-step" name="pump_step"><option>1</option><option selected>5</option><option>10</option></select><span>L</span></div>
+        <small class="field-help">Smallest selectable irrigation quantity.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel conditions-panel">
+    <div class="section-heading">
+      <div><span class="eyebrow">Step 2 · Editable forecast</span><h2>Daily farm conditions</h2><p class="section-copy">Adjust the sample readings to match the scenario you want to test.</p></div>
+      <button type="button" class="button secondary" id="reset-sample">Reset sample</button>
+    </div>
+    <div class="table-wrap">
+      <table class="input-table">
+        <thead><tr><th>Day</th><th>Soil moisture %</th><th>Temperature °C</th><th>Rainfall mm</th><th>Crop demand mm</th><th>Available water L</th></tr></thead>
+        <tbody id="daily-inputs">
+        {% for row in days %}
+          <tr>
+            <td><input name="day_{{ loop.index0 }}" value="{{ row.day }}" aria-label="Day label"></td>
+            <td><input type="number" name="soil_moisture_{{ loop.index0 }}" value="{{ row.soil_moisture|int }}" min="0" max="100" step="0.1"></td>
+            <td><input type="number" name="temperature_{{ loop.index0 }}" value="{{ row.temperature|int }}" min="-10" max="60" step="0.1"></td>
+            <td><input type="number" name="rainfall_{{ loop.index0 }}" value="{{ row.rainfall|int }}" min="0" step="0.1"></td>
+            <td><input type="number" name="crop_requirement_{{ loop.index0 }}" value="{{ row.crop_requirement|int }}" min="0" step="0.1"></td>
+            <td><input type="number" name="available_water_{{ loop.index0 }}" value="{{ row.available_water }}" min="0" step="1"></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-action">
+      <div class="action-note"><span>✦</span><p><strong>Ready to optimise?</strong><small>Both algorithms will run instantly in your browser session.</small></p></div>
+      <button class="button primary generate-button" type="submit"><span>Generate smart schedules</span><i>→</i></button>
+    </div>
+  </section>
+</form>
+
+<template id="day-row-template">
+  <tr>
+    <td><input data-name="day" value="Day"></td>
+    <td><input type="number" data-name="soil_moisture" value="35" min="0" max="100" step="0.1"></td>
+    <td><input type="number" data-name="temperature" value="30" min="-10" max="60" step="0.1"></td>
+    <td><input type="number" data-name="rainfall" value="0" min="0" step="0.1"></td>
+    <td><input type="number" data-name="crop_requirement" value="4" min="0" step="0.1"></td>
+    <td><input type="number" data-name="available_water" value="25" min="0" step="1"></td>
+  </tr>
+</template>
+{% endblock %}

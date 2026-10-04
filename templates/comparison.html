@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Comparison · Smart Irrigation{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">Algorithm intelligence</span><h1>Two strategies.<br><em>One smarter outcome.</em></h1><p>See how immediate decisions compare with a whole-period plan.</p></div><a class="button secondary" href="{{ url_for('dashboard') }}">← Edit inputs</a></div>
+<section class="metric-grid">
+  <article class="metric-card"><div class="metric-top"><span>Greedy water</span><button class="info-button" type="button" aria-label="Explain Greedy result" data-icon="⚡" data-insight-title="Greedy result" data-insight-text="Greedy makes the best-looking immediate choice for each day and adds a safety buffer, without planning how later days may need the same shared water." data-insight-tip="Its main advantage is O(n) time and a very simple decision rule.">i</button></div><strong>{{ greedy_totals.water }} L</strong><small>{{ greedy_totals.safe_days }} safe days</small><div class="metric-line orange" style="--fill:{{ (greedy_totals.safe_days / greedy|length * 100)|int }}%"></div></article>
+  <article class="metric-card featured"><div class="metric-top"><span>DP water</span><button class="info-button light" type="button" aria-label="Explain DP result" data-icon="🧩" data-insight-title="Dynamic Programming result" data-insight-text="DP evaluates daily choices as part of one shared-budget problem. It maximises safe days, then prioritises critical days, then favours the plan using least water." data-insight-tip="The DP state is day index plus water units already used.">i</button></div><strong>{{ dynamic_totals.water }} L</strong><small>{{ dynamic_totals.safe_days }} safe days</small><div class="metric-line" style="--fill:{{ (dynamic_totals.safe_days / dynamic|length * 100)|int }}%"></div></article>
+  <article class="metric-card saved-card"><div class="metric-top"><span>Water saved</span><span class="metric-spark">✦</span></div><strong>{{ greedy_totals.water - dynamic_totals.water }} L</strong><small>using the DP plan</small><div class="saving-ring"><span>{{ ((greedy_totals.water - dynamic_totals.water) / greedy_totals.water * 100)|round|int if greedy_totals.water else 0 }}%</span></div></article>
+</section>
+<section class="panel chart-panel"><div class="section-heading"><div><span class="eyebrow">Daily allocation</span><h2>Water-use rhythm</h2><p class="section-copy">Orange shows immediate Greedy choices; green shows the DP plan.</p></div><div class="chart-legend"><span><i class="orange-dot"></i>Greedy</span><span><i></i>DP</span></div></div><canvas id="comparison-chart" height="300" aria-label="Daily irrigation comparison chart"></canvas></section>
+<section class="panel explanation"><h2>Why the results differ</h2><p><strong>Greedy</strong> treats each day independently and adds a safety margin whenever irrigation is needed. It is simple and fast, but does not consider future days.</p><p><strong>Dynamic Programming</strong> evaluates skip/water choices across the full period. It maximises safe days, prioritises dry and hot days when the budget is tight, and uses the least water among equally good plans.</p></section>
+{% endblock %}
+{% block scripts %}
+<script>
+window.chartData = {
+  labels: {{ greedy|map(attribute='day')|list|tojson }},
+  greedy: {{ greedy|map(attribute='irrigation')|list|tojson }},
+  dynamic: {{ dynamic|map(attribute='irrigation')|list|tojson }}
+};
+drawComparisonChart(document.getElementById('comparison-chart'), window.chartData);
+</script>
+{% endblock %}

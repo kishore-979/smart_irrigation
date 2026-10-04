@@ -1,0 +1,12 @@
+day,soil_moisture,temperature,rainfall,crop_requirement,available_water
+Day 1,34,30,1,4,25
+Day 2,32,30,1,4,25
+Day 3,32,30,1,4,25
+Day 4,31,30,1,4,25
+Day 5,32,30,1,4,25
+Day 6,31,30,1,4,25
+Day 7,32,30,1,4,25
+Day 8,31,30,1,4,25
+Day 9,32,30,1,4,25
+Day 10,31,30,1,4,25
+
